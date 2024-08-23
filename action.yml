@@ -34,12 +34,12 @@ runs:
       shell: bash
 
     - name: Accept Android SDK licenses
-      run: yes | $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses
+      run: yes | $HOME/android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --licenses
       shell: bash
 
     - name: Create and start Android emulator
       run: |
-        echo "no" | $HOME/android-sdk/cmdline-tools/tools/bin/avdmanager create avd -n ${{ inputs.avd-name }} -k "system-images;android-${{ inputs.sdk-version }};google_apis;x86_64" --device "pixel"
+        echo "no" | $HOME/android-sdk/cmdline-tools/cmdline-tools/bin/avdmanager create avd -n ${{ inputs.avd-name }} -k "system-images;android-${{ inputs.sdk-version }};google_apis;x86_64" --device "pixel"
         nohup $HOME/android-sdk/emulator/emulator -avd ${{ inputs.avd-name }} -no-snapshot-save -no-boot-anim -wipe-data -no-window -gpu off &
         $HOME/android-sdk/platform-tools/adb wait-for-device
       shell: bash
