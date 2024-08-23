@@ -1,11 +1,13 @@
-# Set the base image to use for subsequent instructions
-FROM alpine:3.20
+# Dockerfile
+FROM ubuntu:latest
 
-# Set the working directory inside the container
-WORKDIR /usr/src
+# Install necessary packages
+RUN apt-get update && \
+    apt-get install -y wget unzip
 
-# Copy any source file(s) required for the action
-COPY main-script.sh .
+# Copy and set up scripts
+COPY main-script.sh /usr/local/bin/main-script.sh
+RUN chmod +x /usr/local/bin/main-script.sh
 
-# Configure the container to be run as an executable
-ENTRYPOINT ["/usr/src/main-script.sh"]
+# Set entrypoint
+ENTRYPOINT ["/usr/local/bin/main-script.sh"]
