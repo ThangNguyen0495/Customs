@@ -4,13 +4,13 @@ set -e
 
 # Install Java
 echo "Installing Java JDK 22..."
-sudo apt-get update
-sudo apt-get install -y wget
+apt-get update
+apt-get install -y wget
 
 # Download and install JDK 22
 wget https://github.com/adoptium/temurin22-binaries/releases/download/jdk-22%2B6/OpenJDK22U-jdk_x64_linux_hotspot_22_6.tar.gz
-sudo mkdir -p /usr/lib/jvm
-sudo tar -xzf OpenJDK22U-jdk_x64_linux_hotspot_22_6.tar.gz -C /usr/lib/jvm
+mkdir -p /usr/lib/jvm
+tar -xzf OpenJDK22U-jdk_x64_linux_hotspot_22_6.tar.gz -C /usr/lib/jvm
 
 # Set JAVA_HOME and update PATH
 export JAVA_HOME=/usr/lib/jvm/jdk-22
@@ -23,9 +23,9 @@ echo "$JAVA_HOME/bin" >> "$GITHUB_PATH"
 
 # Enable KVM group permissions
 echo "Enabling KVM group permissions..."
-echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-sudo udevadm control --reload-rules
-sudo udevadm trigger --name-match=kvm
+echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | tee /etc/udev/rules.d/99-kvm4all.rules
+udevadm control --reload-rules
+udevadm trigger --name-match=kvm
 
 # Cache Android SDK
 echo "Caching Android SDK..."
@@ -35,8 +35,8 @@ echo "Caching Android SDK..."
 # Install Android SDK if not cached
 echo "Installing Android SDK..."
 if [ ! -d "$HOME/android-sdk/cmdline-tools/tools" ]; then
-  sudo apt-get update
-  sudo apt-get install -y wget unzip
+  apt-get update
+  apt-get install -y wget unzip
   wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
   mkdir -p "$HOME"/android-sdk/cmdline-tools
   unzip commandlinetools-linux-8512546_latest.zip -d "$HOME"/android-sdk/cmdline-tools
