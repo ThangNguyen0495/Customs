@@ -1,25 +1,12 @@
 name: 'Android Emulator Setup'
 description: 'Sets up an Android SDK, creates an emulator, and starts it.'
-inputs:
-  sdk-version:
-    description: 'Android SDK version to install'
-    required: true
-    default: '33'
-  java-version:
-    description: 'Java version to use'
-    required: true
-    default: '22'
-  avd-name:
-    description: 'Name of the Android Virtual Device'
-    required: true
-    default: 'test'
 runs:
   using: 'composite'
   steps:
     - name: Set up JDK
       uses: actions/setup-java@v3
       with:
-        java-version: ${{ inputs.java-version }}
+        java-version: '22'
         distribution: 'temurin'
 
     - name: Enable KVM group perms
@@ -70,25 +57,25 @@ runs:
     - name: Install SDK packages
       if: steps.cache-android-sdk.outputs.cache-hit != 'true'
       run: |
-        $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-${{ inputs.sdk-version }}" "build-tools;${{ inputs.sdk-version }}.0.0" "system-images;android-${{ inputs.sdk-version }};google_apis;x86_64" "emulator"
+        $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0" "system-images;android-33;google_apis;x86_64" "emulator"
       shell: bash
 
     - name: Check aapt
       run: |
         cd $HOME/android-sdk/build-tools
         ls -l
-        cd $HOME/android-sdk/build-tools/${{ inputs.sdk-version }}.0.0
+        cd $HOME/android-sdk/build-tools/33.0.0
         ls -l
       shell: bash
 
     - name: Create Android emulator
       run: |
-        echo "no" | $HOME/android-sdk/cmdline-tools/tools/bin/avdmanager create avd -n ${{ inputs.avd-name }} -k "system-images;android-${{ inputs.sdk-version }};google_apis;x86_64" --device "pixel"
+        echo "no" | $HOME/android-sdk/cmdline-tools/tools/bin/avdmanager create avd -n emu -k "system-images;android-33;google_apis;x86_64" --device "pixel"
       shell: bash
 
     - name: Start Android emulator
       run: |
-        nohup $HOME/android-sdk/emulator/emulator -avd ${{ inputs.avd-name }} -no-snapshot-save -no-boot-anim -wipe-data -no-window -gpu off &
+        nohup $HOME/android-sdk/emulator/emulator -avd emu -no-snapshot-save -no-boot-anim -wipe-data -no-window -gpu off &
         $ANDROID_HOME/platform-tools/adb wait-for-device
       shell: bash
 
