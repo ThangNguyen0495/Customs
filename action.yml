@@ -1,21 +1,75 @@
-name: Hello, World!
-description: Greet someone and record the time
-author: GitHub Actions
-
-# Define your inputs here.
+# .github/actions/android-emulator-setup/action.yml
+name: 'Android Emulator Setup'
+description: 'Sets up an Android SDK, creates an emulator, and starts it.'
+author: 'Your Name'
 inputs:
-  who-to-greet:
-    description: Who to greet
+  sdk-version:
+    description: 'Android SDK version to install'
     required: true
-    default: World
+    default: '33'
 
-# Define your outputs here.
-outputs:
-  time:
-    description: The time we greeted you
+  java-version:
+    description: 'Java version to use'
+    required: true
+    default: '22'
+
+  avd-name:
+    description: 'Name of the Android Virtual Device'
+    required: true
+    default: 'emu'
 
 runs:
-  using: docker
-  image: Dockerfile
-  env:
-    INPUT_WHO_TO_GREET: ${{ inputs.who-to-greet }}
+  using: composite
+  steps:
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ inputs.java-version }}
+        distribution: 'temurin'
+
+    - name: Enable KVM group perms
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+
+    - name: Install Android SDK
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget unzip
+        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+        mkdir -p $HOME/android-sdk/cmdline-tools
+        unzip commandlinetools-linux-8512546_latest.zip -d $HOME/android-sdk/cmdline-tools
+        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/tools
+
+    - name: Set up environment variables
+      run: |
+        echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+        echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+        echo "PATH=$ANDROID_HOME/cmdline-tools/tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH" >> $GITHUB_ENV
+        echo "$ANDROID_HOME/cmdline-tools/tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator" >> $GITHUB_PATH
+        echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+
+    - name: Accept Android SDK licenses
+      run: yes | $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses
+
+    - name: Install SDK packages
+      run: |
+        $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-${{ inputs.sdk-version }}" "build-tools;${{ inputs.sdk-version }}.0.0" "system-images;android-${{ inputs.sdk-version }};google_apis;x86_64" "emulator"
+
+    - name: Create Android emulator
+      run: |
+        echo "no" | $HOME/android-sdk/cmdline-tools/tools/bin/avdmanager create avd -n ${{ inputs.avd-name }} -k "system-images;android-${{ inputs.sdk-version }};google_apis;x86_64" --device "pixel"
+
+    - name: Start Android emulator
+      run: |
+        nohup $HOME/android-sdk/emulator/emulator -avd ${{ inputs.avd-name }} -no-snapshot-save -no-boot-anim -wipe-data -no-window -gpu off &
+        $ANDROID_HOME/platform-tools/adb wait-for-device
+
+#
+#
+#runs:
+#  using: docker
+#  image: Dockerfile
+#  env:
+#    INPUT_WHO_TO_GREET: ${{ inputs.who-to-greet }}
