@@ -63,7 +63,8 @@ runs:
       shell: bash
 
     - name: Accept Android SDK licenses
-      run: yes | $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses
+      run: |
+        $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses | grep -v "Accept? (y/N):" | while read -r line; do echo "yes"; done
       shell: bash
 
     - name: Install SDK packages
