@@ -22,27 +22,30 @@ runs:
         java-version: ${{ inputs.java-version }}
         distribution: 'temurin'
 
-#    - name: Install Android SDK
-#      run: |
-#        sudo apt-get update
-#        sudo apt-get install -y wget unzip
-#        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
-#        mkdir -p $HOME/android-sdk/cmdline-tools
-#        unzip commandlinetools-linux-8512546_latest.zip -d $HOME/android-sdk/cmdline-tools
-#        rm commandlinetools-linux-8512546_latest.zip
-#        echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-#      shell: bash
-#
-#    - name: Accept Android SDK licenses
-#      run: yes | $HOME/android-sdk/cmdline-tools/cmdline-tools/bin/sdkmanager --licenses
-#      shell: bash
-#
-#    - name: Create and start Android emulator
-#      run: |
-#        echo "no" | $HOME/android-sdk/cmdline-tools/cmdline-tools/bin/avdmanager create avd -n ${{ inputs.avd-name }} -k "system-images;android-${{ inputs.sdk-version }};google_apis;x86_64" --device "pixel"
-#        nohup $HOME/android-sdk/emulator/emulator -avd ${{ inputs.avd-name }} -no-snapshot-save -no-boot-anim -wipe-data -no-window -gpu off &
-#        $HOME/android-sdk/platform-tools/adb wait-for-device
-#      shell: bash
+    - name: Enable KVM group perms
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+      shell: bash
+
+    - name: Cache Android SDK
+      id: cache-android-sdk
+      uses: actions/cache@v3
+      with:
+        path: ${{ github.workspace }}/android-sdk
+        key: android-sdk-${{ runner.os }}-${{ hashFiles('**/build.gradle', '**/pom.xml', '**/*.sdk-version') }}
+
+    - name: Install Android SDK
+      if: steps.cache-android-sdk.outputs.cache-hit != 'true'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget unzip
+        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+        mkdir -p $HOME/android-sdk/cmdline-tools
+        unzip commandlinetools-linux-8512546_latest.zip -d $HOME/android-sdk/cmdline-tools
+        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/tools
+      shell: bash
 
     - name: Set up environment variables
       run: |
