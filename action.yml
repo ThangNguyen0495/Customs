@@ -77,6 +77,12 @@ runs:
     - name: Create Android emulator
       run: |
         echo "no" | $HOME/android-sdk/cmdline-tools/tools/bin/avdmanager create avd -n emu -k "system-images;android-33;google_apis;x86_64" --device "pixel"
+        if [ $? -eq 0 ]; then
+            echo "AVD creation succeeded"
+          else
+            echo "AVD creation failed" >&2
+            exit 1
+          fi
       shell: bash
 
     - name: Start Android emulator
