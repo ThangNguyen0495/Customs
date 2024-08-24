@@ -66,13 +66,10 @@ runs:
           fi
       shell: bash
 
-#    - name: Check aapt
-#      run: |
-#        cd $HOME/android-sdk/build-tools
-#        ls -l
-#        cd $HOME/android-sdk/build-tools/33.0.0
-#        ls -l
-#      shell: bash
+    - name: Check install
+      run: |
+        find $HOME/android-sdk
+      shell: bash
 
     - name: Create Android emulator
       run: |
