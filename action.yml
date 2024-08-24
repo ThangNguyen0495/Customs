@@ -3,15 +3,12 @@ description: 'Sets up an Android SDK, creates an emulator, and starts it.'
 inputs:
   sdk-version:
     description: 'Android SDK version to install'
-    required: true
     default: '33'
   java-version:
     description: 'Java version to use'
-    required: true
     default: '22'
   avd-name:
     description: 'Name of the Android Virtual Device'
-    required: true
     default: 'test'
 runs:
   using: 'composite'
@@ -63,7 +60,8 @@ runs:
       shell: bash
 
     - name: Accept Android SDK licenses
-      run: yes | $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses
+      run: |
+        $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses | grep -v "Accept? (y/N):" | while read -r line; do echo "yes"; done
       shell: bash
 
     - name: Install SDK packages
@@ -72,13 +70,13 @@ runs:
         $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-${{ inputs.sdk-version }}" "build-tools;${{ inputs.sdk-version }}.0.0" "system-images;android-${{ inputs.sdk-version }};google_apis;x86_64" "emulator"
       shell: bash
 
-    - name: Check aapt
-      run: |
-        cd $HOME/android-sdk/build-tools
-        ls -l
-        cd $HOME/android-sdk/build-tools/${{ inputs.sdk-version }}.0.0
-        ls -l
-      shell: bash
+#    - name: Check aapt
+#      run: |
+#        cd $HOME/android-sdk/build-tools
+#        ls -l
+#        cd $HOME/android-sdk/build-tools/${{ inputs.sdk-version }}.0.0
+#        ls -l
+#      shell: bash
 
     - name: Create Android emulator
       run: |
