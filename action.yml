@@ -16,15 +16,7 @@ runs:
         sudo udevadm trigger --name-match=kvm
       shell: bash
 
-    - name: Cache Android SDK
-      id: cache-android-sdk
-      uses: actions/cache@v3
-      with:
-        path: ${{ github.workspace }}/android-sdk
-        key: android-sdk-${{ runner.os }}-${{ hashFiles('**/build.gradle', '**/pom.xml', '**/*.sdk-version') }}
-
     - name: Install Android SDK
-      if: steps.cache-android-sdk.outputs.cache-hit != 'true'
       run: |
         sudo apt-get update
         sudo apt-get install -y wget unzip
@@ -55,7 +47,6 @@ runs:
       shell: bash
 
     - name: Install SDK packages
-      if: steps.cache-android-sdk.outputs.cache-hit != 'true'
       run: |
         $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0" "system-images;android-33;google_apis;x86_64" "emulator"
         sleep 90
@@ -69,12 +60,6 @@ runs:
     - name: Create Android emulator
       run: |
         echo "no" | $HOME/android-sdk/cmdline-tools/tools/bin/avdmanager create avd -n emu -k "system-images;android-33;google_apis;x86_64" --device "pixel"
-        if [ $? -eq 0 ]; then
-            echo "AVD creation succeeded"
-          else
-            echo "AVD creation failed" >&2
-            exit 1
-          fi
       shell: bash
 
     - name: Start Android emulator
