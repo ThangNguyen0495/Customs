@@ -58,12 +58,7 @@ runs:
       if: steps.cache-android-sdk.outputs.cache-hit != 'true'
       run: |
         $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0" "system-images;android-33;google_apis;x86_64" "emulator"
-        if [ $? -eq 0 ]; then
-            echo "Package install successfully"
-          else
-            echo "Package install failed" >&2
-            exit 1
-          fi
+        sleep 90
       shell: bash
 
     - name: Check install
