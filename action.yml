@@ -22,12 +22,12 @@ runs:
 
     - name: Install Android SDK
       run: |
-        sudo apt-get update > /dev/null 2>&1
-        sudo apt-get install -y wget unzip > /dev/null 2>&1
-        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip > /dev/null 2>&1
+        sudo apt-get update /dev/null
+        sudo apt-get install -y wget unzip /dev/null
+        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip /dev/null
         mkdir -p $HOME/android-sdk/cmdline-tools > /dev/null 2>&1
-        unzip commandlinetools-linux-8512546_latest.zip -d $HOME/android-sdk/cmdline-tools > /dev/null 2>&1
-        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/tools > /dev/null 2>&1
+        unzip commandlinetools-linux-8512546_latest.zip -d $HOME/android-sdk/cmdline-tools /dev/null
+        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/tools /dev/null
       shell: bash
 
     - name: Set up environment variables
@@ -46,18 +46,18 @@ runs:
       shell: bash
 
     - name: Accept Android SDK licenses interactively
-      run: yes | $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses || true > /dev/null 2>&1
+      run: yes | $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses || true /dev/null
       shell: bash
 
     - name: Install SDK package
       run: |
-        $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0" "system-images;android-33;google_apis;x86_64" "emulator" > /dev/null 2>&1
+        $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0" "system-images;android-33;google_apis;x86_64" "emulator" /dev/null
       shell: bash
 
     - name: Create emulator
       run: |
         tree $HOME/android-sdk
-        echo "no" | $HOME/android-sdk/cmdline-tools/tools/bin/avdmanager create avd -n emu -k "system-images;android-33;google_apis;x86_64" --device "pixel" > /dev/null 2>&1
+        echo "no" | $HOME/android-sdk/cmdline-tools/tools/bin/avdmanager create avd -n emu -k "system-images;android-33;google_apis;x86_64" --device "pixel" /dev/null
       shell: bash
 
     - name: Start Android emulator
