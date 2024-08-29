@@ -39,7 +39,25 @@ runs:
       run: yes | $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses  > /dev/null 2>&1 || true
       shell: bash
 
-    - name: Install SDK package
+    - name: Configure and Resign qemu Binary
+      if: runner.os == 'macOS'
+      run: |
+        sudo xcode-select --install || echo "Xcode Command Line Tools already installed"
+        cd ~/Library/Android/sdk/emulator/qemu/darwin-x86_64
+        cat <<EOF > entitlements.xml
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>com.apple.security.hypervisor</key>
+            <true/>
+        </dict>
+        </plist>
+        EOF
+        codesign -s - --entitlements entitlements.xml --force ./qemu-system-x86_64
+      shell: bash
+
+    - name: Install SDK images
       run: |
         if [[ "${{ runner.os }}" == "Linux" ]]; then
           $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0" "system-images;android-33;google_apis;x86_64" "emulator"  > /dev/null 2>&1
