@@ -35,12 +35,6 @@ runs:
         echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
       shell: bash
 
-    - name: Check Ubuntu environment variables
-      run: |
-        echo $ANDROID_HOME
-        echo $PATH
-      shell: bash
-
     - name: Accept Android SDK licenses interactively
       run: yes | $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses  > /dev/null 2>&1 || true
       shell: bash
@@ -66,7 +60,11 @@ runs:
 
     - name: Start Android emulator
       run: |
-        nohup $HOME/android-sdk/emulator/emulator -avd emu -no-snapshot-save -no-boot-anim -wipe-data -no-window -gpu off &
+        if [[ "${{ runner.os }}" == "Linux" ]]; then
+           nohup $HOME/android-sdk/emulator/emulator -avd emu -no-snapshot-save -no-boot-anim -wipe-data -no-window -gpu off &
+        else
+           nohup $HOME/android-sdk/emulator/emulator -avd emu -no-snapshot -no-window -no-audio -no-boot-anim &
+        fi 
         $ANDROID_HOME/platform-tools/adb wait-for-device
       shell: bash
 
