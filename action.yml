@@ -45,16 +45,19 @@ runs:
         echo $PATH
       shell: bash
 
-    - name: Accept Android SDK licenses
+    - name: Accept Android SDK licenses interactively
       run: |
-        $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses | while read -r line; do echo "y"; done
-        sleep 10
+        $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses | while IFS= read -r line; do
+          echo "$line"
+          if [[ "$line" == *"Accept? (y/N):"* ]]; then
+            echo "y"
+          fi
+        done
       shell: bash
 
     - name: Create Android emulator
       run: |
         $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0" "system-images;android-33;google_apis;x86_64" "emulator"
-        sleep 75
       shell: bash
 
     - name: Check emulator package
