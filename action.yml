@@ -17,10 +17,6 @@ runs:
         sudo udevadm trigger --name-match=kvm
       shell: bash
 
-    - name: Install tree
-      run: sudo apt-get install tree
-      shell: bash
-
     - name: Install Android SDK
       run: |
         sudo apt-get update  > /dev/null 2>&1
@@ -47,7 +43,7 @@ runs:
       shell: bash
 
     - name: Accept Android SDK licenses interactively
-      run: yes | $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses || true  > /dev/null 2>&1
+      run: yes | $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses  > /dev/null 2>&1 || true
       shell: bash
 
     - name: Install SDK package
@@ -57,7 +53,6 @@ runs:
 
     - name: Create emulator
       run: |
-        tree $HOME/android-sdk
         echo "no" | $HOME/android-sdk/cmdline-tools/tools/bin/avdmanager create avd -n emu -k "system-images;android-33;google_apis;x86_64" --device "pixel"  > /dev/null 2>&1
       shell: bash
 
