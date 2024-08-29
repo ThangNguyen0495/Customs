@@ -3,7 +3,8 @@ description: 'Sets up an Android SDK, creates an emulator, and starts it.'
 runs:
   using: 'composite'
   steps:
-    - name: Enable KVM group perms
+    - name: Enable KVM group permission for Linux runners
+      if: runner.os == 'Linux'
       run: |
         echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
         sudo udevadm control --reload-rules
@@ -12,8 +13,13 @@ runs:
 
     - name: Install Android SDK
       run: |
-        sudo apt-get update  > /dev/null 2>&1
-        sudo apt-get install -y wget unzip  > /dev/null 2>&1
+        if [[ "${{ runner.os }}" == "Linux" ]]; then
+          sudo apt-get update > /dev/null 2>&1
+          sudo apt-get install -y wget unzip > /dev/null 2>&1
+        else
+          brew update > /dev/null 2>&1
+          brew install wget unzip > /dev/null 2>&1
+        fi
         wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip  > /dev/null 2>&1
         mkdir -p $HOME/android-sdk/cmdline-tools  > /dev/null 2>&1
         unzip commandlinetools-linux-8512546_latest.zip -d $HOME/android-sdk/cmdline-tools  > /dev/null 2>&1
