@@ -46,13 +46,7 @@ runs:
       shell: bash
 
     - name: Accept Android SDK licenses interactively
-      run: |
-        $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses | while IFS= read -r line; do
-          echo "$line"
-          if [[ "$line" == *"Accept? (y/N):"* ]]; then
-            echo "y"
-          fi
-        done
+      run: yes | $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses
       shell: bash
 
     - name: Create Android emulator
