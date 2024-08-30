@@ -1,10 +1,15 @@
-name: 'Selenium Workflow Action'
-description: 'Custom GitHub Action to run Selenium tests with Maven.'
+name: 'Android Appium Workflow Action'
+description: 'Custom GitHub Action to run Appium tests with Maven.'
 inputs:
   java_version:
     description: 'The version of Java to install.'
     required: false
     default: '22'
+
+  node_version:
+    description: 'The version of NodeJS to install.'
+    required: false
+    default: '21'
 
   artifact:
     description: 'The artifact to download. That is the test source code.'
@@ -22,6 +27,11 @@ inputs:
     description: 'The branch name to switch to.'
     required: false
 
+  appium_port:
+    description: 'The port on which the Appium server should run.'
+    required: false
+    default: '4723'
+
   scripts:
     description: 'The maven commands to execute the test.'
     required: false
@@ -32,7 +42,7 @@ runs:
       if: ${{ inputs.artifact != '' }}
       uses: actions/download-artifact@v4
       with:
-        name: ${{ inputs.artifact }}
+        name: ${{ inputs.artifact}}
         path: CheckoutFolder
 
     - name: Switch to another branch
@@ -46,29 +56,32 @@ runs:
       if: ${{ inputs.artifact == '' }}
       uses: actions/checkout@v2
 
-    - name: Set up Java
+    - name: Set up JDK 22
       uses: actions/setup-java@v3
       with:
-        java-version: ${{ inputs.java_version }}
         distribution: 'temurin'
+        java-version: ${{ inputs.java_version }}
 
-    - name: Install FFmpeg
-      if: runner.os == 'Linux'
-      run: sudo apt-get update && sudo apt-get install -y ffmpeg > /dev/null 2>&1
-      shell: bash
+    - name: Create and start emulator
+      uses: ThangNguyen0495/create-android-emulator@v1.0.0
 
-    - name: Install FFmpeg
-      if: runner.os == 'macOS'
-      run: brew install ffmpeg > /dev/null 2>&1
-      shell: bash
-
-    - name: Cache Maven packages
-      uses: actions/cache@v3
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
       with:
-        path: ~/.m2/repository
-        key: ${{ runner.os }}-maven-ubuntu
-        restore-keys: |
-          ${{ runner.os }}-maven-ubuntu
+        node-version: ${{ inputs.node_version }}
+
+    - name: Install Appium
+      run: npm install -g appium > /dev/null 2>&1
+      shell: bash
+
+    - name: Install UIAutomator2 driver
+      run: appium driver install uiautomator2 > /dev/null 2>&1
+      shell: bash
+
+    - name: Start Appium server
+      run: |
+        nohup appium -a 0.0.0.0 -p ${{ inputs.appium_port }} -pa /wd/hub > appium_log.txt 2>&1 > /dev/null 2>&1
+      shell: bash
 
     - name: Install dependencies
       run: |
@@ -78,7 +91,7 @@ runs:
         mvn install -DskipTests > /dev/null 2>&1
       shell: bash
 
-    - name: Run tests
+    - name: Run Appium tests with Maven
       run: |
         if [ "${{ inputs.artifact }}" != "" ]; then
           cd CheckoutFolder
@@ -86,8 +99,13 @@ runs:
         if [ "${{ inputs.scripts }}" != ""]; then
           ${{ inputs.scripts }}
         else
-          mvn test "-DsuiteFile=${{ inputs.test_config }}"
+          mvn test "-DsuiteFile=${{ inputs.test_config }}" "-Dudid=emulator-5554" "-DappiumPort=${{ inputs.appium_port }}"
         fi
+      shell: bash
+
+    - name: Appium log
+      if: always()
+      run: cat appium_log.txt
       shell: bash
 
     - name: Upload Test Report
