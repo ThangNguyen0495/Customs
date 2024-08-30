@@ -1,6 +1,11 @@
 name: 'Selenium Workflow Action'
 description: 'Custom GitHub Action to run Selenium tests with Maven.'
 inputs:
+  java_version:
+    description: 'The version of Java to install.'
+    required: false
+    default: '22'
+
   artifact:
     description: 'The artifact to download. That is the test source code.'
     required: false
@@ -44,8 +49,8 @@ runs:
     - name: Set up Java
       uses: actions/setup-java@v3
       with:
-        java-version: '22'
-        distribution: 'adopt'
+        java-version: ${{ inputs.java_version }}
+        distribution: 'temurin'
 
     - name: Install FFmpeg
       run: sudo apt-get update && sudo apt-get install -y ffmpeg
