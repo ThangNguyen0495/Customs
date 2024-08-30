@@ -62,6 +62,16 @@ runs:
         distribution: 'temurin'
         java-version: ${{ inputs.java_version }}
 
+    - name: Install FFmpeg
+      if: runner.os == 'Linux'
+      run: sudo apt-get update && sudo apt-get install -y ffmpeg > /dev/null 2>&1
+      shell: bash
+
+    - name: Install FFmpeg
+      if: runner.os == 'macOS'
+      run: brew install ffmpeg > /dev/null 2>&1
+      shell: bash
+
     - name: Create and start emulator
       uses: ThangNguyen0495/create-android-emulator@v1.0.0
 
