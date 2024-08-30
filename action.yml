@@ -25,12 +25,11 @@ runs:
     - name: IInstall Android SDK on macOS
       if: runner.os == 'macOS'
       run: |
-        brew update > /dev/null 2>&1
-        brew install wget unzip > /dev/null 2>&1
-        cd $HOME/android-sdk/cmdline-tools > /dev/null 2>&1
-        wget https://dl.google.com/android/repository/commandlinetools-mac-8512546_latest.zip > /dev/null 2>&1
-        mkdir -p $HOME/android-sdk/cmdline-tools  > /dev/null 2>&1
-        unzip commandlinetools-mac-8512546_latest.zip -d $HOME/android-sdk/cmdline-tools  > /dev/null 2>&1
+        brew update  > /dev/null 2>&1
+        brew install wget unzip  > /dev/null 2>&1
+        wget https://dl.google.com/android/repository/commandlinetools-mac-8512546_latest.zip  > /dev/null 2>&1
+        mkdir -p $HOME/android-sdk/cmdline-tools   > /dev/null 2>&1
+        unzip commandlinetools-mac-8512546_latest.zip -d $HOME/android-sdk/cmdline-tools   > /dev/null 2>&1
         mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/tools  > /dev/null 2>&1
       shell: bash
 
