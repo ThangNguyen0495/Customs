@@ -83,8 +83,8 @@ runs:
         if [ "${{ inputs.artifact }}" != "" ]; then
           cd CheckoutFolder
         fi
-        if [ -n "${{ inputs.scripts }}" ]; then
-          ${!{ inputs.scripts }}
+        if [ "${{ inputs.scripts }}" != ""]; then
+          ${{ inputs.scripts }}
         else
           mvn test "-DsuiteFile=${{ inputs.test_config }}"
         fi
