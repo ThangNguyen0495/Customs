@@ -96,9 +96,9 @@ runs:
       with:
         name: Test Reports - ${{ inputs.test_name }}
         path: |
-          CheckoutFolder/target/BufferLog.
-          CheckoutFolder/target/ExtentReport.html
-          CheckoutFolder/recording_video
+          **/target/BufferLog.
+          **/target/ExtentReport.html
+          **/recording_video
 
     - name: Remove cloned repo
       if: ${{ inputs.artifact != '' }}
