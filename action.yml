@@ -106,10 +106,10 @@ runs:
         if [ "${{ inputs.artifact }}" != "" ]; then
           cd CheckoutFolder
         fi
-        if [ "${{ inputs.scripts }}" != ""]; then
-          ${{ inputs.scripts }}
-        else
+        if [ "${{ inputs.scripts }}" == "" ]; then
           mvn test "-DsuiteFile=${{ inputs.test_config }}" "-Dudid=emulator-5554" "-DappiumPort=${{ inputs.appium_port }}"
+        else
+          ${!{ inputs.scripts }}
         fi
       shell: bash
 
