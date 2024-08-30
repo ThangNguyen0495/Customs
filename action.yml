@@ -12,7 +12,7 @@ inputs:
 
   test_config:
     description: 'The test configuration file to use.'
-    required: true
+    required: false
 
   test_name:
     description: 'The name of the test suite.'
@@ -75,7 +75,7 @@ runs:
         if [ "${{ inputs.artifact }}" != "" ]; then
           cd CheckoutFolder
         fi
-        mvn install -DskipTests
+        mvn install -DskipTests > /dev/null 2>&1
       shell: bash
 
     - name: Run tests
@@ -83,7 +83,11 @@ runs:
         if [ "${{ inputs.artifact }}" != "" ]; then
           cd CheckoutFolder
         fi
-        mvn --batch-mode test "-DsuiteFile=${{ inputs.test_config }}"
+        if [ -n "${{ inputs.scripts }}" ]; then
+          ${!{ inputs.scripts }}
+        else
+          mvn test "-DsuiteFile=${{ inputs.test_config }}"
+        fi
       shell: bash
 
     - name: Upload Test Report
