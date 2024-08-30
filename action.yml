@@ -1,4 +1,4 @@
-name: 'Android Appium Workflow Action'
+name: 'IOS Appium Workflow Action'
 description: 'Custom GitHub Action to run Appium tests with Maven.'
 inputs:
   java_version:
@@ -54,43 +54,62 @@ runs:
 
     - name: Checkout code
       if: ${{ inputs.artifact == '' }}
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
-    - name: Set up JDK 22
+    - name: Set up JDK
       uses: actions/setup-java@v3
       with:
         distribution: 'temurin'
         java-version: ${{ inputs.java_version }}
-
-    - name: Install FFmpeg
-      if: runner.os == 'Linux'
-      run: sudo apt-get update && sudo apt-get install -y ffmpeg > /dev/null 2>&1
-      shell: bash
-
-    - name: Install FFmpeg
-      if: runner.os == 'macOS'
-      run: brew install ffmpeg > /dev/null 2>&1
-      shell: bash
-
-    - name: Create and start emulator
-      uses: ThangNguyen0495/create-android-emulator@v1.0.0
 
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
         node-version: ${{ inputs.node_version }}
 
+    - name: Cache Node.js Modules
+      uses: actions/cache@v3
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
     - name: Install Appium
       run: npm install -g appium > /dev/null 2>&1
       shell: bash
 
-    - name: Install UIAutomator2 driver
-      run: appium driver install uiautomator2 > /dev/null 2>&1
+    - name: Install Xcode command-line tools
+      run: xcode-select --install > /dev/null 2>&1 || true
+      shell: bash
+
+    - name: Install FFmpeg
+      run: brew install ffmpeg > /dev/null 2>&1
+      shell: bash
+
+    - name: Install Carthage
+      run: brew install carthage > /dev/null 2>&1
+      shell: bash
+
+    - name: Set Xcode version
+      run: |
+        sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer > /dev/null 2>&1
+      shell: bash
+
+    - name: Start iOS Simulator
+      id: start_simulator
+      run: |
+        DEVICE_UDID=$(xcrun simctl create "iPhone-13" com.apple.CoreSimulator.SimDeviceType.iPhone-13 com.apple.CoreSimulator.SimRuntime.iOS-17-0)
+        xcrun simctl boot $DEVICE_UDID > /dev/null 2>&1
+        echo "SIMULATOR_UDID=$DEVICE_UDID" >> $GITHUB_ENV > /dev/null 2>&1
+      shell: bash
+
+    - name: Install XCUITest driver
+      run: appium driver install xcuitest > /dev/null 2>&1
       shell: bash
 
     - name: Start Appium server
-      run: |
-        nohup appium -a 0.0.0.0 -p ${{ inputs.appium_port }} -pa /wd/hub > appium_log.txt 2>&1 & > /dev/null 2>&1
+      run: nohup appium -a 0.0.0.0 -p ${{ inputs.appium_port }} -pa /wd/hub > appium_log.txt 2>&1 & > /dev/null 2>&1
       shell: bash
 
     - name: Install dependencies
@@ -101,22 +120,23 @@ runs:
         mvn install -DskipTests > /dev/null 2>&1
       shell: bash
 
-    - name: Run Appium tests with Maven
+    - name: Run Tests
       run: |
         if [ "${{ inputs.artifact }}" != "" ]; then
           cd CheckoutFolder
         fi
         if [ "${{ inputs.scripts }}" == "" ]; then
-          mvn test "-DsuiteFile=${{ inputs.test_config }}" "-Dudid=emulator-5554" "-DappiumPort=${{ inputs.appium_port }}"
+          mvn test "-DsuiteFile=${{ inputs.test_config }}" "-DudidIOS=$SIMULATOR_UDID" "-DappiumPort=${{ inputs.appium_port }}"
         else
           ${!{ inputs.scripts }}
         fi
       shell: bash
 
-    - name: Appium log
+    - name: View appium log
       if: always()
       run: cat appium_log.txt
       shell: bash
+
 
     - name: Upload Test Report
       if: always()
