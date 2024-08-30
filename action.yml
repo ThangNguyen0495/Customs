@@ -96,7 +96,7 @@ runs:
       with:
         name: Test Reports - ${{ inputs.test_name }}
         path: |
-          **/target/BufferLog.
+          **/target/BufferLog.log
           **/target/ExtentReport.html
           **/recording_video
 
