@@ -90,7 +90,7 @@ runs:
 
     - name: Start Appium server
       run: |
-        nohup appium -a 0.0.0.0 -p ${{ inputs.appium_port }} -pa /wd/hub > appium_log.txt 2>&1 > /dev/null 2>&1
+        nohup appium -a 0.0.0.0 -p ${{ inputs.appium_port }} -pa /wd/hub > appium_log.txt 2>&1 & > /dev/null 2>&1
       shell: bash
 
     - name: Install dependencies
