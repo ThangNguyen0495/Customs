@@ -25,12 +25,12 @@ runs:
     - name: IInstall Android SDK on macOS
       if: runner.os == 'macOS'
       run: |
-        brew update
-        brew install wget unzip 
-        wget https://dl.google.com/android/repository/commandlinetools-mac-8512546_latest.zip 
-        mkdir -p $HOME/android-sdk/cmdline-tools  
-        unzip commandlinetools-mac-8512546_latest.zip -d $HOME/android-sdk/cmdline-tools  
-        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/tools
+        brew update  > /dev/null 2>&1
+        brew install wget unzip  > /dev/null 2>&1
+        wget https://dl.google.com/android/repository/commandlinetools-mac-8512546_latest.zip  > /dev/null 2>&1
+        mkdir -p $HOME/android-sdk/cmdline-tools   > /dev/null 2>&1
+        unzip commandlinetools-mac-8512546_latest.zip -d $HOME/android-sdk/cmdline-tools   > /dev/null 2>&1
+        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/tools  > /dev/null 2>&1
       shell: bash
 
     - name: Set up environment variables
@@ -46,51 +46,34 @@ runs:
       run: yes | $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses  > /dev/null 2>&1 || true
       shell: bash
 
-    - name: Configure and Resign qemu Binary
+    - name: Install SDK images on Linux
+      if: runner.os == 'Linux'
+      run: |
+        $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0" "system-images;android-33;google_apis;x86_64" "emulator"  > /dev/null 2>&1
+      shell: bash
+
+    - name: Install SDK images on macOS
       if: runner.os == 'macOS'
       run: |
-        sudo xcode-select --install || echo "Xcode Command Line Tools already installed"
-        cd ~/Library/Android/sdk/emulator/qemu/darwin-x86_64
-        cat <<EOF > entitlements.xml
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0">
-        <dict>
-            <key>com.apple.security.hypervisor</key>
-            <true/>
-        </dict>
-        </plist>
-        EOF
-        codesign -s - --entitlements entitlements.xml --force ./qemu-system-x86_64
+        $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0" "system-images;android-33;google_apis;arm64-v8a" "emulator"  > /dev/null 2>&1
       shell: bash
 
-    - name: Install SDK images
+    - name: Create emulator on Linux
+      if: runner.os == 'Linux'
       run: |
-        if [[ "${{ runner.os }}" == "Linux" ]]; then
-          $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0" "system-images;android-33;google_apis;x86_64" "emulator"  > /dev/null 2>&1
-        else
-          $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0" "system-images;android-33;google_apis;arm64-v8a" "emulator"  > /dev/null 2>&1
-        fi
+        echo "no" | $HOME/android-sdk/cmdline-tools/tools/bin/avdmanager create avd -n emu -k "system-images;android-33;google_apis;x86_64" --device "pixel"  > /dev/null 2>&1
       shell: bash
 
-    - name: Create emulator
+    - name: Create emulator on macOS
+      if: runner.os == 'macOS'
       run: |
-        if [[ "${{ runner.os }}" == "Linux" ]]; then
-          echo "no" | $HOME/android-sdk/cmdline-tools/tools/bin/avdmanager create avd -n emu -k "system-images;android-33;google_apis;x86_64" --device "pixel"  > /dev/null 2>&1
-        else
-          echo "no" | $HOME/android-sdk/cmdline-tools/tools/bin/avdmanager create avd -n emu -k "system-images;android-33;google_apis;arm64-v8a" --device "pixel"  > /dev/null 2>&1
-        fi
-
+        echo "no" | $HOME/android-sdk/cmdline-tools/tools/bin/avdmanager create avd -n emu -k "system-images;android-33;google_apis;arm64-v8a" --device "pixel"  > /dev/null 2>&1
       shell: bash
 
     - name: Start Android emulator
       if: runner.os == 'Linux'
       run: |
-        if [[ "${{ runner.os }}" == "Linux" ]]; then
-           nohup $HOME/android-sdk/emulator/emulator -avd emu -no-snapshot-save -no-boot-anim -wipe-data -no-window -gpu off &
-        else
-           nohup $HOME/android-sdk/emulator/emulator -avd emu -no-snapshot -no-window -no-audio -no-boot-anim &
-        fi 
+        nohup $HOME/android-sdk/emulator/emulator -avd emu -no-snapshot-save -no-boot-anim -wipe-data -no-window -gpu off &
         $ANDROID_HOME/platform-tools/adb wait-for-device
       shell: bash
 
