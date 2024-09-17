@@ -1,15 +1,10 @@
-name: 'IOS Appium Workflow Action'
-description: 'Custom GitHub Action to run Appium tests with Maven.'
+name: 'Selenium Workflow Action'
+description: 'Custom GitHub Action to run Selenium tests with Maven.'
 inputs:
   java_version:
     description: 'The version of Java to install.'
     required: false
     default: '22'
-
-  node_version:
-    description: 'The version of NodeJS to install.'
-    required: false
-    default: '21'
 
   artifact:
     description: 'The artifact to download. That is the test source code.'
@@ -27,11 +22,6 @@ inputs:
     description: 'The branch name to switch to.'
     required: false
 
-  appium_port:
-    description: 'The port on which the Appium server should run.'
-    required: false
-    default: '4723'
-
   scripts:
     description: 'The maven commands to execute the test.'
     required: false
@@ -42,7 +32,7 @@ runs:
       if: ${{ inputs.artifact != '' }}
       uses: actions/download-artifact@v4
       with:
-        name: ${{ inputs.artifact}}
+        name: ${{ inputs.artifact }}
         path: CheckoutFolder
 
     - name: Switch to another branch
@@ -54,63 +44,33 @@ runs:
 
     - name: Checkout code
       if: ${{ inputs.artifact == '' }}
-      uses: actions/checkout@v3
+      uses: actions/checkout@v2
 
-    - name: Set up JDK
+    - name: Set up Java
       uses: actions/setup-java@v3
       with:
-        distribution: 'temurin'
         java-version: ${{ inputs.java_version }}
+        distribution: 'temurin'
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ inputs.node_version }}
-
-    - name: Cache Node.js Modules
-      uses: actions/cache@v3
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
-
-    - name: Install Appium
-      run: npm install -g appium > /dev/null 2>&1
-      shell: bash
-
-    - name: Install Xcode command-line tools
-      run: xcode-select --install > /dev/null 2>&1 || true
+    - name: Install FFmpeg
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update > /dev/null 2>&1
+        sudo apt-get install -y ffmpeg > /dev/null 2>&1
       shell: bash
 
     - name: Install FFmpeg
+      if: runner.os == 'macOS'
       run: brew install ffmpeg > /dev/null 2>&1
       shell: bash
 
-    - name: Install Carthage
-      run: brew install carthage > /dev/null 2>&1
-      shell: bash
-
-    - name: Set Xcode version
-      run: |
-        sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer > /dev/null 2>&1
-      shell: bash
-
-    - name: Start iOS Simulator
-      id: start_simulator
-      run: |
-        DEVICE_UDID=$(xcrun simctl create "iPhone-13" com.apple.CoreSimulator.SimDeviceType.iPhone-13 com.apple.CoreSimulator.SimRuntime.iOS-17-0)
-        xcrun simctl boot $DEVICE_UDID > /dev/null 2>&1
-        echo "SIMULATOR_UDID=$DEVICE_UDID" >> $GITHUB_ENV > /dev/null 2>&1
-      shell: bash
-
-    - name: Install XCUITest driver
-      run: appium driver install xcuitest > /dev/null 2>&1
-      shell: bash
-
-    - name: Start Appium server
-      run: nohup appium -a 0.0.0.0 -p ${{ inputs.appium_port }} -pa /wd/hub > appium_log.txt 2>&1 & > /dev/null 2>&1
-      shell: bash
+    - name: Cache Maven packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-ubuntu
+        restore-keys: |
+          ${{ runner.os }}-maven-ubuntu
 
     - name: Install dependencies
       run: |
@@ -120,23 +80,22 @@ runs:
         mvn install -DskipTests > /dev/null 2>&1
       shell: bash
 
-    - name: Run Tests
+    - name: Run tests
       run: |
         if [ "${{ inputs.artifact }}" != "" ]; then
           cd CheckoutFolder
         fi
-        if [ "${{ inputs.scripts }}" == "" ]; then
-          mvn test "-DsuiteFile=${{ inputs.test_config }}" "-DudidIOS=$SIMULATOR_UDID" "-DappiumPort=${{ inputs.appium_port }}"
+
+        if [ -z "${{ inputs.scripts }}" ]; then
+          mvn test "-DsuiteFile=${{ inputs.test_config }}"
         else
-          ${!{ inputs.scripts }}
+          # Run the custom script from inputs.scripts if it's not empty
+          if [ -n "${{ inputs.scripts }}" ]; then
+            # Directly execute the value of inputs.scripts
+            bash -c "${{ inputs.scripts }}"
+          fi
         fi
       shell: bash
-
-    - name: View appium log
-      if: always()
-      run: cat appium_log.txt
-      shell: bash
-
 
     - name: Upload Test Report
       if: always()
