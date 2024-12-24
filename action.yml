@@ -17,5 +17,5 @@ runs:
       run: |
         DEVICE_UDID=$(xcrun simctl create "iPhone-13" com.apple.CoreSimulator.SimDeviceType.iPhone-13 com.apple.CoreSimulator.SimRuntime.iOS-17-0)
         xcrun simctl boot $DEVICE_UDID > /dev/null 2>&1
-        echo "::set-output name=simulator_udid::$DEVICE_UDID"
+        echo $DEVICE_UDID > udid.txt
       shell: bash
