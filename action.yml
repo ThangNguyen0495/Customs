@@ -4,23 +4,19 @@ description: 'Custom GitHub Action to retrieve the iOS Simulator UDID.'
 runs:
   using: 'composite'
   steps:
-    - name: Set up Xcode and iOS simulator environment
-      run: |
-        # Ensure Xcode command-line tools are available
-        xcode-select --install
-        sudo xcodebuild -runFirstLaunch
+    - name: Install Xcode command-line tools
+      run: xcode-select --install > /dev/null 2>&1 || true
       shell: bash
 
-    - name: Create and Boot iOS Simulator
+    - name: Set Xcode version
+      run: |
+        sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer > /dev/null 2>&1
+      shell: bash
+
+    - name: Start iOS Simulator
       id: start_simulator
       run: |
-        # Create a new iPhone 13 simulator instance with a specific iOS version
         DEVICE_UDID=$(xcrun simctl create "iPhone-13" com.apple.CoreSimulator.SimDeviceType.iPhone-13 com.apple.CoreSimulator.SimRuntime.iOS-17-0)
-        
-        # Boot the newly created simulator
         xcrun simctl boot $DEVICE_UDID > /dev/null 2>&1
-        
-        # Output the UDID to GitHub Actions environment variables
-        echo "SIMULATOR_UDID=$DEVICE_UDID" >> $GITHUB_ENV
-        echo "Simulator UDID is: $DEVICE_UDID"
+        echo "SIMULATOR_UDID=$DEVICE_UDID" >> $GITHUB_ENV > /dev/null 2>&1
       shell: bash
