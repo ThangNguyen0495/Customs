@@ -1,114 +1,26 @@
-name: 'Selenium Workflow Action'
-description: 'Custom GitHub Action to run Selenium tests with Maven.'
-inputs:
-  java_version:
-    description: 'The version of Java to install.'
-    required: false
-    default: '22'
+name: 'iOS Simulator UDID Action'
+description: 'Custom GitHub Action to retrieve the iOS Simulator UDID.'
 
-  artifact:
-    description: 'The artifact to download. That is the test source code.'
-    required: false
-
-  test_config:
-    description: 'The test configuration file to use.'
-    required: false
-
-  test_name:
-    description: 'The name of the test suite.'
-    required: true
-
-  branch_name:
-    description: 'The branch name to switch to.'
-    required: false
-
-  scripts:
-    description: 'The maven commands to execute the test.'
-    required: false
 runs:
   using: 'composite'
   steps:
-    - name: Download artifact
-      if: ${{ inputs.artifact != '' }}
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ inputs.artifact }}
-        path: CheckoutFolder
-
-    - name: Switch to another branch
-      if: ${{ inputs.branch_name != '' }}
+    - name: Set up Xcode and iOS simulator environment
       run: |
-        cd CheckoutFolder
-        git checkout ${{ inputs.branch_name }}
+        # Ensure Xcode command-line tools are available
+        xcode-select --install
+        sudo xcodebuild -runFirstLaunch
       shell: bash
 
-    - name: Checkout code
-      if: ${{ inputs.artifact == '' }}
-      uses: actions/checkout@v2
-
-    - name: Set up Java
-      uses: actions/setup-java@v3
-      with:
-        java-version: ${{ inputs.java_version }}
-        distribution: 'temurin'
-
-    - name: Install FFmpeg
-      if: runner.os == 'Linux'
+    - name: Create and Boot iOS Simulator
+      id: start_simulator
       run: |
-        sudo apt-get update > /dev/null 2>&1
-        sudo apt-get install -y ffmpeg > /dev/null 2>&1
-      shell: bash
-
-    - name: Install FFmpeg
-      if: runner.os == 'macOS'
-      run: brew install ffmpeg > /dev/null 2>&1
-      shell: bash
-
-    - name: Cache Maven packages
-      uses: actions/cache@v3
-      with:
-        path: ~/.m2/repository
-        key: ${{ runner.os }}-maven-ubuntu
-        restore-keys: |
-          ${{ runner.os }}-maven-ubuntu
-
-    - name: Install dependencies
-      run: |
-        if [ "${{ inputs.artifact }}" != "" ]; then
-          cd CheckoutFolder
-        fi
-        mvn install -DskipTests > /dev/null 2>&1
-      shell: bash
-
-    - name: Run tests
-      run: |
-        if [ "${{ inputs.artifact }}" != "" ]; then
-          cd CheckoutFolder
-        fi
-
-        if [ -z "${{ inputs.scripts }}" ]; then
-          mvn test "-DsuiteFile=${{ inputs.test_config }}"
-        else
-          # Run the custom script from inputs.scripts if it's not empty
-          if [ -n "${{ inputs.scripts }}" ]; then
-            # Directly execute the value of inputs.scripts
-            bash -c "${{ inputs.scripts }}"
-          fi
-        fi
-      shell: bash
-
-    - name: Upload Test Report
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: Test Reports - ${{ inputs.test_name }}
-        path: |
-          **/target/BufferLog.log
-          **/target/ExtentReport.html
-          **/recording_video
-
-    - name: Remove cloned repo
-      if: ${{ inputs.artifact != '' }}
-      run: |
-        rm -r CheckoutFolder
+        # Create a new iPhone 13 simulator instance with a specific iOS version
+        DEVICE_UDID=$(xcrun simctl create "iPhone-13" com.apple.CoreSimulator.SimDeviceType.iPhone-13 com.apple.CoreSimulator.SimRuntime.iOS-17-0)
+        
+        # Boot the newly created simulator
+        xcrun simctl boot $DEVICE_UDID > /dev/null 2>&1
+        
+        # Output the UDID to GitHub Actions environment variables
+        echo "SIMULATOR_UDID=$DEVICE_UDID" >> $GITHUB_ENV
+        echo "Simulator UDID is: $DEVICE_UDID"
       shell: bash
