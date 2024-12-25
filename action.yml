@@ -1,21 +1,22 @@
-name: 'iOS Simulator UDID Action'
-description: 'Custom GitHub Action to retrieve the iOS Simulator UDID.'
+name: Access Environment-Specific Secret
+
+description: 'A composite action to access environment-specific secrets.'
+
+inputs:
+  environment:
+    description: "The environment to access secrets for (e.g., STAG_VN)"
+    required: true
+    default: "STAG_VN"
 
 runs:
   using: 'composite'
   steps:
-    - name: Install Xcode command-line tools
-      run: xcode-select --install > /dev/null 2>&1 || true
-      shell: bash
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
-    - name: Set Xcode version
-      run: |
-        sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer > /dev/null 2>&1
+    - name: Access the HOST Secret
+      env:
+        HOST: ${{ secrets.HOST }}  # Assumes you have configured secrets for each environment
       shell: bash
-
-    - name: Start iOS Simulator and output UDID
       run: |
-        DEVICE_UDID=$(xcrun simctl create "iPhone-13" com.apple.CoreSimulator.SimDeviceType.iPhone-13 com.apple.CoreSimulator.SimRuntime.iOS-17-0)
-        xcrun simctl boot $DEVICE_UDID > /dev/null 2>&1
-        echo $DEVICE_UDID > udid.txt
-      shell: bash
+        echo "The HOST value is $HOST"
