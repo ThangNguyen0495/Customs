@@ -69,9 +69,9 @@ runs:
 
     - name: Start Android emulator
       run: |
-        nohup $HOME/android-sdk/emulator/emulator -avd emu -no-snapshot-save -no-boot-anim -wipe-data -no-window -gpu off &
+        nohup $HOME/android-sdk/emulator/emulator -avd emu &
         $ANDROID_HOME/platform-tools/adb wait-for-device
-        sleep 1m
+        sleep 30
       shell: bash
 
     - name: Check list devices
