@@ -1,22 +1,80 @@
-name: Access Environment-Specific Secret
-
-description: 'A composite action to access environment-specific secrets.'
-
+name: 'Android Emulator Setup'
+description: 'Sets up an Android SDK, creates an emulator, and starts it.'
 inputs:
-  environment:
-    description: "The environment to access secrets for (e.g., STAG_VN)"
+  api-level:
+    description: 'The API level to use for the Android emulator.'
     required: true
-    default: "STAG_VN"
+    default: '35'
 
 runs:
   using: 'composite'
   steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
-
-    - name: Access the HOST Secret
-      env:
-        HOST: ${{ secrets.HOST }}  # Assumes you have configured secrets for each environment
-      shell: bash
+    - name: Enable KVM group permission for Linux runners
+      if: runner.os == 'Linux'
       run: |
-        echo "The HOST value is $HOST"
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+      shell: bash
+
+    - name: Install Android SDK on Linux
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update > /dev/null 2>&1
+        sudo apt-get install -y wget unzip > /dev/null 2>&1
+        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip  > /dev/null 2>&1
+        mkdir -p $HOME/android-sdk/cmdline-tools  > /dev/null 2>&1
+        unzip commandlinetools-linux-8512546_latest.zip -d $HOME/android-sdk/cmdline-tools  > /dev/null 2>&1
+        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/tools  > /dev/null 2>&1
+      shell: bash
+
+    - name: Install Android SDK on macOS
+      if: runner.os == 'macOS'
+      run: |
+        brew update  > /dev/null 2>&1
+        brew install wget unzip  > /dev/null 2>&1
+        wget https://dl.google.com/android/repository/commandlinetools-mac-8512546_latest.zip  > /dev/null 2>&1
+        mkdir -p $HOME/android-sdk/cmdline-tools   > /dev/null 2>&1
+        unzip commandlinetools-mac-8512546_latest.zip -d $HOME/android-sdk/cmdline-tools   > /dev/null 2>&1
+        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/tools  > /dev/null 2>&1
+      shell: bash
+
+    - name: Set up environment variables
+      run: |
+        echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+        echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+        echo "PATH=$ANDROID_HOME/cmdline-tools/tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH" >> $GITHUB_ENV
+        echo "$ANDROID_HOME/cmdline-tools/tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator" >> $GITHUB_PATH
+        echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+      shell: bash
+
+    - name: Accept Android SDK licenses interactively
+      run: yes | $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses  > /dev/null 2>&1 || true
+      shell: bash
+
+    - name: Install SDK images
+      run: |
+        $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager \
+          "platform-tools" \
+          "platforms;android-${{ inputs.api-level }}" \
+          "build-tools;${{ inputs.api-level }}.0.0" \
+          "system-images;android-${{ inputs.api-level }};google_apis;x86_64" \
+          "emulator" > /dev/null 2>&1
+      shell: bash
+
+    - name: Create emulator
+      run: |
+        echo "no" | $HOME/android-sdk/cmdline-tools/tools/bin/avdmanager create avd -n emu -k "system-images;android-${{ inputs.api-level }};google_apis;x86_64" --device "pixel" > /dev/null 2>&1
+      shell: bash
+
+    - name: Start Android emulator
+      run: |
+        nohup $HOME/android-sdk/emulator/emulator -avd emu -no-snapshot-save -no-boot-anim -wipe-data -no-window -gpu off &
+        adb wait-for-device
+        sleep 1m
+      shell: bash
+
+    - name: Check list devices
+      run: |
+        $ANDROID_HOME/platform-tools/adb devices
+      shell: bash
