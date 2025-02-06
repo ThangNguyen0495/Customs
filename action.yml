@@ -70,7 +70,7 @@ runs:
     - name: Start Android emulator
       run: |
         nohup $HOME/android-sdk/emulator/emulator -avd emu -no-snapshot-save -no-boot-anim -wipe-data -no-window -gpu off &
-        adb wait-for-device
+        $ANDROID_HOME/platform-tools/adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) && -z $(getprop dev.bootcomplete) ]]; do sleep 1; done'
         sleep 1m
       shell: bash
 
