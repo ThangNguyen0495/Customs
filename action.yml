@@ -13,9 +13,9 @@ runs:
       if: runner.os == 'Linux'
       run: |
         echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-        sudo udevadm control --reload-rules
-        sudo udevadm trigger --name-match=kvm
-        sudo apt-get install libpulse0 libpulse-dev
+        sudo udevadm control --reload-rules > /dev/null 2>&1
+        sudo udevadm trigger --name-match=kvm > /dev/null 2>&1
+        sudo apt-get install libpulse0 libpulse-dev > /dev/null 2>&1
       shell: bash
 
     - name: Install Android SDK on Linux
@@ -70,7 +70,7 @@ runs:
 
     - name: Start Android emulator
       run: |
-        nohup $HOME/android-sdk/emulator/emulator -avd emu &
+        nohup $HOME/android-sdk/emulator/emulator -avd emu -no-metrics -no-snapshot-save -no-boot-anim -wipe-data -no-window -gpu off &
         $ANDROID_HOME/platform-tools/adb wait-for-device
       shell: bash
 
