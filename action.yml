@@ -64,7 +64,7 @@ runs:
 
     - name: Create emulator
       run: |
-        echo "no" | $HOME/android-sdk/cmdline-tools/tools/bin/avdmanager create avd -n emu -k "system-images;android-${{ inputs.api-level }};google_apis;x86_64" --device "pixel 8" > /dev/null 2>&1
+        echo "no" | $HOME/android-sdk/cmdline-tools/tools/bin/avdmanager create avd -n emu -k "system-images;android-${{ inputs.api-level }};google_apis;x86_64" --device "pixel" > /dev/null 2>&1
       shell: bash
 
     - name: Restart the ADB server before starting the test
