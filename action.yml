@@ -77,7 +77,7 @@ runs:
 
     - name: Start Android emulator
       run: |
-          nohup $HOME/android-sdk/emulator/emulator -avd emu &
+          nohup $HOME/android-sdk/emulator/emulator -avd emu -no-audio -gpu swiftshader_indirect -accel off &
           $ANDROID_HOME/platform-tools/adb wait-for-device
       shell: bash
 
