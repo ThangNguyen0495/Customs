@@ -60,7 +60,7 @@ runs:
           "platform-tools" \
           "platforms;android-${{ inputs.api-level }}" \
           "build-tools;${{ inputs.api-level }}.0.0" \
-          "system-images;android-${{ inputs.api-level }};google_apis;x86_64" \
+          "system-images;android-${{ inputs.api-level }};google_apis;arm64-v8a" \
           "emulator" > /dev/null 2>&1
       shell: bash
 
