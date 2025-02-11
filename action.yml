@@ -26,6 +26,8 @@ runs:
         mkdir -p $HOME/android-sdk/cmdline-tools  > /dev/null 2>&1
         unzip commandlinetools-linux-8512546_latest.zip -d $HOME/android-sdk/cmdline-tools  > /dev/null 2>&1
         mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/tools  > /dev/null 2>&1
+        sudo apt-get update && sudo apt-get install -y libpulse0
+
       shell: bash
 
     - name: Install Android SDK on macOS
