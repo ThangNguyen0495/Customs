@@ -13,9 +13,8 @@ runs:
       if: runner.os == 'Linux'
       run: |
         echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-        sudo udevadm control --reload-rules > /dev/null 2>&1
-        sudo udevadm trigger --name-match=kvm > /dev/null 2>&1
-        sudo apt-get install libpulse0 libpulse-dev > /dev/null 2>&1
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
       shell: bash
 
     - name: Install Android SDK on Linux
@@ -68,13 +67,30 @@ runs:
         echo "no" | $HOME/android-sdk/cmdline-tools/tools/bin/avdmanager create avd -n emu -k "system-images;android-${{ inputs.api-level }};google_apis;x86_64" --device "pixel" > /dev/null 2>&1
       shell: bash
 
+    - name: Restart the ADB server before starting the test
+      run: |
+            $ANDROID_HOME/platform-tools/adb kill-server
+            $ANDROID_HOME/platform-tools/adb start-server
+      shell: bash
+
     - name: Start Android emulator
       run: |
-        nohup $HOME/android-sdk/emulator/emulator -avd emu -no-metrics -no-snapshot-save -no-boot-anim -wipe-data -no-window -gpu off &
-        $ANDROID_HOME/platform-tools/adb wait-for-device
+          nohup $HOME/android-sdk/emulator/emulator -avd emu &
+          $ANDROID_HOME/platform-tools/adb wait-for-device
+      shell: bash
+
+    - name: Wait for Emulator to Boot
+      run: |
+        boot_completed=""
+        while [ "$boot_completed" != "1" ]; do
+          sleep 5
+          boot_completed=$($ANDROID_HOME/platform-tools/adb shell getprop sys.boot_completed 2>/dev/null)
+          echo "Waiting for emulator to boot..."
+        done
+        echo "Emulator is ready!"
       shell: bash
 
     - name: Check list devices
       run: |
-        $ANDROID_HOME/platform-tools/adb devices
+          $ANDROID_HOME/platform-tools/adb devices
       shell: bash
